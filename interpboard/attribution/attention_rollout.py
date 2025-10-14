@@ -60,6 +60,13 @@ class AttentionAttributor:
             outputs = self.model(**inputs, output_attentions=True)
         
         attentions = outputs.attentions  # List of [batch, heads, seq_len, seq_len]
+        
+        if attentions is None or len(attentions) == 0:
+            raise RuntimeError("No attention weights returned by model. Make sure model supports output_attentions=True")
+        
+        if attentions[0] is None:
+            raise RuntimeError("Attention weights are None. Model may not support attention output.")
+        
         seq_len = attentions[0].shape[-1]
         
         # Stack attention weights: [batch, layers, heads, seq_len, seq_len]
@@ -137,6 +144,10 @@ class AttentionAttributor:
             outputs = self.model(**inputs, output_attentions=True)
         
         attentions = outputs.attentions
+        
+        if attentions is None or len(attentions) == 0:
+            raise RuntimeError("No attention weights returned by model")
+        
         seq_len = attentions[0].shape[-1]
         
         if target_position is None:

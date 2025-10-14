@@ -72,6 +72,7 @@ class GradientAttributor:
         # Get embeddings and enable gradients
         embeddings = self.model.get_input_embeddings()(input_ids)
         embeddings.requires_grad_(True)
+        embeddings.retain_grad()  # Ensure gradient is retained for non-leaf tensor
         
         # Forward pass
         outputs = self.model(
@@ -97,6 +98,9 @@ class GradientAttributor:
         
         # Get gradients w.r.t. embeddings
         gradients = embeddings.grad  # [batch_size, seq_len, embedding_dim]
+        
+        if gradients is None:
+            raise RuntimeError("Gradients are None. Make sure model parameters require gradients.")
         
         # Compute attribution scores (gradient norm for each token)
         attributions = torch.norm(gradients, dim=-1)  # [batch_size, seq_len]
@@ -146,6 +150,7 @@ class GradientAttributor:
         # Get embeddings
         embeddings = self.model.get_input_embeddings()(input_ids)
         embeddings.requires_grad_(True)
+        embeddings.retain_grad()  # Ensure gradient is retained
         
         # Forward pass
         outputs = self.model(
@@ -170,6 +175,9 @@ class GradientAttributor:
         
         # Get gradients
         gradients = embeddings.grad  # [batch_size, seq_len, embedding_dim]
+        
+        if gradients is None:
+            raise RuntimeError("Gradients are None. Make sure embeddings retain gradients.")
         
         # Compute gradient × input
         grad_x_input = gradients * embeddings  # Element-wise multiplication
@@ -257,6 +265,7 @@ class GradientAttributor:
             alpha = step / (steps - 1) if steps > 1 else 1.0
             interpolated_embeddings = baseline_embeddings + alpha * (original_embeddings - baseline_embeddings)
             interpolated_embeddings.requires_grad_(True)
+            interpolated_embeddings.retain_grad()  # Ensure gradients are retained
             
             # Forward pass
             outputs = self.model(
@@ -274,8 +283,13 @@ class GradientAttributor:
             
             target_score.backward(retain_graph=True)
             
-            # Accumulate gradients
-            integrated_gradients += interpolated_embeddings.grad / steps
+            # Check if gradients exist
+            if interpolated_embeddings.grad is not None:
+                integrated_gradients += interpolated_embeddings.grad / steps
+            else:
+                logger.warning(f"No gradients found for integration step {step}")
+                # Use zero gradients for this step
+                integrated_gradients += torch.zeros_like(interpolated_embeddings) / steps
         
         # Compute final attributions
         diff = original_embeddings - baseline_embeddings
@@ -330,6 +344,7 @@ class GradientAttributor:
         # Get embeddings
         embeddings = self.model.get_input_embeddings()(input_ids)
         embeddings.requires_grad_(True)
+        embeddings.retain_grad()  # Ensure gradients are retained
         
         # Forward pass
         outputs = self.model(inputs_embeds=embeddings, attention_mask=attention_mask)
@@ -349,6 +364,9 @@ class GradientAttributor:
         # Simple LRP: use gradients with epsilon rule
         target_score.backward(retain_graph=True)
         gradients = embeddings.grad
+        
+        if gradients is None:
+            raise RuntimeError("Gradients are None. Cannot compute LRP.")
         
         # LRP epsilon rule: R = (input * gradient) / (input + epsilon * sign(input))
         denominator = embeddings + epsilon * torch.sign(embeddings)
