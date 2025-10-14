@@ -1,0 +1,6 @@
+rich
+matplotlib
+plotly
+seaborn
+pandas
+numpy

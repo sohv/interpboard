@@ -1,0 +1,16 @@
+torch
+transformers
+numpy
+matplotlib
+seaborn
+plotly
+rich
+termcolor
+pandas
+scipy
+streamlit
+gradio
+ipywidgets
+jupyter
+tqdm
+einops
