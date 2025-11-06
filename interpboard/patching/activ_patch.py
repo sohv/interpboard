@@ -201,26 +201,53 @@ class ActivationPatcher:
         position_idx: Optional[Union[int, List[int]]] = None
     ) -> torch.Tensor:
         """Apply patch to specific attention head."""
-        # attention_output shape: [batch, seq_len, num_heads, head_dim]
-        batch_size, seq_len, num_heads, head_dim = attention_output.shape
+        # Handle different attention output shapes
+        if attention_output.dim() == 3:
+            # Shape: [batch, seq_len, hidden_dim] - need to reshape for head-specific patching
+            batch_size, seq_len, hidden_dim = attention_output.shape
+            # Infer num_heads and head_dim from model info
+            num_heads = self.model_info.get("num_heads", 12)
+            head_dim = hidden_dim // num_heads
+            
+            # Reshape to [batch, seq_len, num_heads, head_dim]
+            reshaped_output = attention_output.view(batch_size, seq_len, num_heads, head_dim)
+            
+        elif attention_output.dim() == 4:
+            # Shape: [batch, seq_len, num_heads, head_dim] - already in correct format
+            batch_size, seq_len, num_heads, head_dim = attention_output.shape
+            reshaped_output = attention_output
+            
+        else:
+            raise ValueError(f"Unexpected attention output shape: {attention_output.shape}")
         
         if head_idx >= num_heads:
             raise ValueError(f"Head index {head_idx} >= num_heads {num_heads}")
         
-        patched_output = attention_output.clone()
+        patched_output = reshaped_output.clone()
         
         if position_idx is None:
             # Patch entire head
-            patched_output[:, :, head_idx, :] = patch_value
+            if patch_value.dim() == 4:
+                patched_output[:, :, head_idx, :] = patch_value[:, :, head_idx, :]
+            else:
+                # Create zero patch for this head
+                patched_output[:, :, head_idx, :] = 0
         else:
             # Patch specific positions
             if isinstance(position_idx, int):
                 position_idx = [position_idx]
             for pos in position_idx:
                 if pos < seq_len:
-                    patched_output[:, pos, head_idx, :] = patch_value[:, pos] if patch_value.ndim > 1 else patch_value
+                    if patch_value.dim() == 4:
+                        patched_output[:, pos, head_idx, :] = patch_value[:, pos, head_idx, :]
+                    else:
+                        patched_output[:, pos, head_idx, :] = 0
         
-        return patched_output
+        # Return in original shape
+        if attention_output.dim() == 3:
+            return patched_output.view(batch_size, seq_len, hidden_dim)
+        else:
+            return patched_output
     
     def patch_activation(
         self,

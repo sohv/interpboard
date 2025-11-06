@@ -76,7 +76,7 @@ def run_analysis(args):
             args.text,
             methods=args.methods,
             visualize=True,
-            save_html=True
+            interactive=True
         )
         
         if args.output:

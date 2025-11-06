@@ -16,7 +16,7 @@ attribution_result = attribution_dashboard.analyze(
     text,
     methods=["integrated_gradients", "attention_rollout"],
     visualize=True,
-    save_html=True
+    interactive=True
 )
 
 # run comprehensive ablation analysis

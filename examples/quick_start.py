@@ -43,7 +43,7 @@ def main():
         text,
         methods=["integrated_gradients", "attention_rollout"],
         visualize=True,
-        save_html=True
+        interactive=True
     )
     
     # Ablation analysis
