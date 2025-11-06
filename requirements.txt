@@ -14,3 +14,4 @@ ipywidgets
 jupyter
 tqdm
 einops
+accelerate

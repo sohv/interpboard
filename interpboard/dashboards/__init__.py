@@ -55,6 +55,9 @@ class AttributionDashboard:
         self.device = device if device != "auto" else ("cuda" if torch.cuda.is_available() else "cpu")
         self.config = config or Config()
         
+        # Detect if running in remote environment (VS Code remote, SSH, etc.)
+        self.is_remote = self._detect_remote_environment()
+        
         # Initialize analyzers
         self.gradient_attributor = GradientAttributor(model, tokenizer, self.device)
         self.attention_attributor = AttentionAttributor(model, tokenizer, self.device)
@@ -67,7 +70,7 @@ class AttributionDashboard:
         methods: List[str] = None,
         target_position: int = -1,
         visualize: bool = True,
-        save_html: bool = False
+        interactive: bool = True
     ) -> DashboardResult:
         """
         Run comprehensive attribution analysis on text.
@@ -77,7 +80,7 @@ class AttributionDashboard:
             methods: Attribution methods to use
             target_position: Position to analyze (default: last token)
             visualize: Whether to create visualizations
-            save_html: Whether to save interactive HTML
+            interactive: Whether to use interactive Plotly unified dashboard (default: True)
             
         Returns:
             DashboardResult with all analysis results
@@ -143,20 +146,28 @@ class AttributionDashboard:
                 if visualize:
                     plt.show()
             
-            # Interactive HTML visualization
-            if save_html and attribution_results:
-                method_name = list(attribution_results.keys())[0]
-                result = attribution_results[method_name]
-                
-                html_path = f"attribution_{method_name}.html"
-                html_viz = self.text_visualizer.create_html_overlay(
-                    result.tokens,
-                    result.attributions,
-                    title=f"Interactive {method_name.title()} Attribution",
-                    save_path=html_path
+            # Unified Interactive Dashboard (default)
+            if interactive and attribution_results:
+                print("🎨 Creating unified interactive dashboard...")
+                unified_fig = self._create_unified_interactive_dashboard(
+                    attribution_results, 
+                    text,
+                    title="InterpBoard Analysis Dashboard"
                 )
-                visualizations["interactive_html"] = html_path
-                print(f"💾 Saved interactive visualization to {html_path}")
+                
+                # Handle display based on environment
+                if self.is_remote:
+                    # Save unified dashboard as single HTML file
+                    html_path = "interpboard_dashboard.html"
+                    unified_fig.write_html(html_path)
+                    print(f"📊 Saved unified interactive dashboard to {html_path}")
+                    print(f"🌐 Open {html_path} in your browser to view all analyses")
+                else:
+                    # Show directly for local environments
+                    print(f"📊 Displaying unified interactive dashboard...")
+                    unified_fig.show()
+                    
+                visualizations["unified_dashboard"] = unified_fig
         
         # Analyze results
         self._print_attribution_summary(attribution_results)
@@ -180,7 +191,8 @@ class AttributionDashboard:
         self,
         texts: List[str],
         method: str = "integrated_gradients",
-        visualize: bool = True
+        visualize: bool = True,
+        interactive: bool = True
     ) -> Dict[str, DashboardResult]:
         """
         Compare attribution patterns across multiple texts.
@@ -189,6 +201,7 @@ class AttributionDashboard:
             texts: List of texts to compare
             method: Attribution method to use
             visualize: Whether to create comparison visualizations
+            interactive: Whether to use interactive Plotly visualizations
             
         Returns:
             Dictionary mapping text to analysis results
@@ -210,9 +223,114 @@ class AttributionDashboard:
             results[text] = result
         
         if visualize:
-            self._create_comparison_visualization(results, method)
+            if interactive:
+                self._create_interactive_comparison_visualization(results, method)
+            else:
+                self._create_comparison_visualization(results, method)
         
         return results
+    
+    def _create_unified_interactive_dashboard(self, attribution_results, text, title="InterpBoard Dashboard"):
+        """Create a unified interactive dashboard with all analysis results."""
+        from plotly.subplots import make_subplots
+        import plotly.graph_objects as go
+        
+        num_methods = len(attribution_results)
+        
+        # Create subplots with proper spacing to avoid text overlap
+        fig = make_subplots(
+            rows=num_methods,
+            cols=1,
+            subplot_titles=[f"{method.replace('_', ' ').title()} Attribution" 
+                          for method in attribution_results.keys()],
+            vertical_spacing=0.15,  # Increased spacing to prevent overlap
+            specs=[[{"secondary_y": False}] for _ in range(num_methods)]
+        )
+        
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+        
+        for i, (method_name, result) in enumerate(attribution_results.items(), 1):
+            attrs = result.attributions.detach().cpu().numpy()
+            tokens = result.tokens
+            
+            # Create interactive bar chart with hover information
+            hover_template = (
+                "<b>Token:</b> %{text}<br>"
+                "<b>Attribution:</b> %{y:.6f}<br>"
+                "<b>Position:</b> %{x}<br>"
+                "<b>Method:</b> " + method_name.replace('_', ' ').title() +
+                "<extra></extra>"
+            )
+            
+            fig.add_trace(
+                go.Bar(
+                    x=list(range(len(tokens))),
+                    y=attrs,
+                    text=tokens,
+                    name=method_name.replace('_', ' ').title(),
+                    marker_color=colors[i % len(colors)],
+                    hovertemplate=hover_template,
+                    textposition='outside',
+                    textangle=45,  # Angle text to prevent overlap
+                    textfont=dict(size=10)  # Smaller font to prevent overlap
+                ),
+                row=i, col=1
+            )
+            
+            # Update subplot axes with better formatting
+            fig.update_xaxes(
+                title_text="Token Position" if i == num_methods else "",
+                tickmode='array',
+                tickvals=list(range(0, len(tokens), max(1, len(tokens)//10))),  # Show fewer ticks
+                ticktext=[tokens[j] for j in range(0, len(tokens), max(1, len(tokens)//10))],
+                tickangle=45,
+                tickfont=dict(size=9),
+                row=i, col=1
+            )
+            
+            fig.update_yaxes(
+                title_text="Attribution Score",
+                tickfont=dict(size=9),
+                row=i, col=1
+            )
+        
+        # Update overall layout with better spacing
+        fig.update_layout(
+            title=dict(
+                text=f"{title}<br><sub>Text: {text[:80]}{'...' if len(text) > 80 else ''}</sub>",
+                x=0.5,
+                font=dict(size=16)
+            ),
+            height=400 * num_methods,  # Dynamic height based on number of methods
+            width=1400,
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            font=dict(size=11),
+            margin=dict(t=120, b=80, l=80, r=80)  # Better margins
+        )
+        
+        return fig
+    
+    def _detect_remote_environment(self) -> bool:
+        """Detect if running in a remote environment (VS Code remote, SSH, Docker, etc.)."""
+        import os
+        
+        # Check for common remote environment indicators
+        remote_indicators = [
+            os.environ.get('SSH_CONNECTION'),
+            os.environ.get('SSH_CLIENT'), 
+            os.environ.get('VSCODE_IPC_HOOK'),
+            os.environ.get('REMOTE_CONTAINERS'),
+            os.environ.get('CODESPACES')
+        ]
+        
+        return any(indicator for indicator in remote_indicators)
     
     def _print_attribution_summary(self, attribution_results: Dict[str, Any]):
         """Print summary of attribution results."""
@@ -250,7 +368,7 @@ class AttributionDashboard:
             attribution_result = result.attribution_results[method]
             
             # Plot attribution heatmap
-            attrs = attribution_result.attributions.numpy()
+            attrs = attribution_result.attributions.detach().cpu().numpy()
             tokens = attribution_result.tokens
             
             im = axes[i].imshow(attrs.reshape(1, -1), cmap='RdBu_r', aspect='auto')
@@ -265,6 +383,76 @@ class AttributionDashboard:
         plt.suptitle(f"Attribution Comparison - {method.title()}")
         plt.tight_layout()
         plt.show()
+    
+    def _create_interactive_comparison_visualization(self, results: Dict[str, DashboardResult], method: str):
+        """Create interactive Plotly comparison visualization."""
+        print("🎨 Creating interactive comparison visualization...")
+        
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+        
+        num_texts = len(results)
+        fig = make_subplots(
+            rows=num_texts, cols=1,
+            subplot_titles=[f"Text {i+1}: {text[:50]}{'...' if len(text) > 50 else ''}" 
+                          for i, text in enumerate(results.keys())],
+            vertical_spacing=0.05
+        )
+        
+        colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
+        
+        for i, (text, result) in enumerate(results.items()):
+            attribution_result = result.attribution_results[method]
+            attrs = attribution_result.attributions.detach().cpu().numpy()
+            tokens = attribution_result.tokens
+            
+            # Create bar chart for this text with improved text handling
+            fig.add_trace(
+                go.Bar(
+                    x=list(range(len(tokens))),
+                    y=attrs,
+                    text=tokens,
+                    textposition='outside',
+                    textangle=45,  # Angle text to prevent overlap
+                    textfont=dict(size=9),  # Smaller font to prevent overlap
+                    name=f"Text {i+1}",
+                    marker_color=colors[i % len(colors)],
+                    hovertemplate="<b>Token:</b> %{text}<br><b>Attribution:</b> %{y:.6f}<br><b>Position:</b> %{x}<extra></extra>"
+                ),
+                row=i+1, col=1
+            )
+            
+            # Update x-axis for this subplot with better tick handling
+            fig.update_xaxes(
+                tickmode='array',
+                tickvals=list(range(0, len(tokens), max(1, len(tokens)//8))),  # Show fewer ticks
+                ticktext=[tokens[j] for j in range(0, len(tokens), max(1, len(tokens)//8))],
+                tickangle=45,
+                tickfont=dict(size=9),
+                row=i+1, col=1
+            )
+        
+        fig.update_layout(
+            title=f"Interactive Attribution Comparison - {method.title()}",
+            height=350 * num_texts,  # Increased height for better spacing
+            width=1400,
+            showlegend=True,
+            font=dict(size=11),
+            margin=dict(t=100, b=100, l=80, r=80)  # Better margins
+        )
+        
+        # Handle display based on environment
+        if self.is_remote:
+            # Save as HTML for remote environments
+            html_path = "interpboard_comparison_dashboard.html" 
+            fig.write_html(html_path)
+            print(f"📊 Saved interactive comparison dashboard to {html_path}")
+            print(f"🌐 Open {html_path} in your browser to view the comparison analysis")
+            print("✅ Interactive comparison dashboard saved!")
+        else:
+            # Show directly for local environments
+            fig.show()
+            print("✅ Interactive comparison dashboard displayed!")
 
 
 class AblationDashboard:

@@ -1,8 +1,6 @@
 """
 Quick start script demonstrating InterpBoard.
-
-This script shows how to use the high-level dashboard interfaces
-for rapid interpretability analysis.
+This shows how to use the high-level dashboard interfaces for rapid interpretability analysis.
 """
 
 import sys
@@ -15,7 +13,7 @@ try:
     from interpboard.dashboards import create_unified_dashboard
     from interpboard.utils import load_model_and_tokenizer
 except ImportError as e:
-    print("❌ Import Error: Please install the package first:")
+    print(" import error: Please install the package first:")
     print("   cd /path/to/interpboard")
     print("   pip install -e .")
     print(f"   Error details: {e}")
@@ -25,7 +23,7 @@ def main():
     """Run quick start example with dashboards."""
     
     # Create unified dashboards
-    print("🚀 Creating InterpBoard Dashboards...")
+    print(" creating InterpBoard Dashboards...")
     attribution_dashboard, ablation_dashboard = create_unified_dashboard(
         model_name="gpt2",
         device="auto"
@@ -34,11 +32,11 @@ def main():
     # Example text for analysis
     text = "The Eiffel Tower is located in Paris, France."
     
-    print(f"\n🔍 Analyzing: '{text}'")
+    print(f"\n Analyzing: '{text}'")
     
     # Attribution analysis
     print("\n" + "="*60)
-    print("📊 ATTRIBUTION ANALYSIS")
+    print(" Attribution analysis")
     print("="*60)
     
     attribution_result = attribution_dashboard.analyze(
@@ -50,7 +48,7 @@ def main():
     
     # Ablation analysis
     print("\n" + "="*60)
-    print("🔬 ABLATION ANALYSIS")
+    print(" Ablation analysis")
     print("="*60)
     
     ablation_result = ablation_dashboard.analyze(
@@ -60,9 +58,9 @@ def main():
         visualize=True
     )
     
-    # Quick comparison across different texts
+    # quick comparison across different texts
     print("\n" + "="*60)
-    print("🔄 COMPARATIVE ANALYSIS")
+    print(" Comparative Analysis")
     print("="*60)
     
     test_texts = [
@@ -77,7 +75,7 @@ def main():
         visualize=True
     )
     
-    print("\n✅ Analysis complete!")
+    print("\n Analysis complete!")
     print("\nKey insights:")
     
     # Extract and display key insights
@@ -104,11 +102,11 @@ def main():
             head_id, impact = critical_heads[0]
             print(f"  • Most critical attention head: {head_id} (impact: {impact:.3f})")
     
-    print(f"\n📁 Results saved in:")
+    print(f"\n Results saved in:")
     print(f"  • Interactive HTML: attribution_integrated_gradients.html")
     print(f"  • Matplotlib figures: displayed above")
     
-    print(f"\n🎯 Next steps:")
+    print(f"\n Next steps:")
     print(f"  • Try with different models (GPT-2 medium/large, GPT-Neo)")
     print(f"  • Analyze more complex texts and tasks")
     print(f"  • Explore the full API in the example notebooks")

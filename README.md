@@ -76,47 +76,64 @@ interpboard analyze --model gpt2 --text "Your text here"
 
 ### Quick Attribution Analysis
 ```python
-from interpboard.attribution import GradientAttributor, AttributionVisualizer
+from interpboard.dashboards import create_unified_dashboard
 
-# Load your model
-model, tokenizer = load_model_and_tokenizer("gpt2")
+# Create unified dashboard (automatically loads model)
+attribution_dashboard, ablation_dashboard = create_unified_dashboard("gpt2")
 
-# Analyze token importance
-attributor = GradientAttributor(model, tokenizer)
-result = attributor.integrated_gradients("The capital of France is Paris.")
+# Analyze text with multiple methods and interactive visualizations
+result = attribution_dashboard.analyze(
+    "The capital of France is Paris.",
+    methods=["integrated_gradients", "attention_rollout"],
+    visualize=True,
+    interactive=True  # Creates interactive Plotly visualizations
+)
 
-# Visualize results
-visualizer = AttributionVisualizer()
-visualizer.plot_token_heatmap(result, title="Token Attribution")
+# Compare multiple texts
+comparison_results = attribution_dashboard.compare_texts([
+    "The capital of France is Paris.",
+    "London is the capital of England."
+], method="integrated_gradients", interactive=True)
 ```
 
-### Causal Tracing
+### Causal Tracing & Ablation Analysis
 ```python
-from interpboard.patching import CausalTracer
+# Use the ablation dashboard for comprehensive patching analysis
+patch_result = ablation_dashboard.patch_activations(
+    "The Eiffel Tower is located in Paris.",
+    layer_range=(4, 8),  # Focus on middle layers
+    visualize=True
+)
 
-with CausalTracer(model, tokenizer) as tracer:
-    result = tracer.trace_causal_effect(
-        text="The Eiffel Tower is located in",
-        subject_tokens=["Eiffel", "Tower"],
-        target_token_position=-1
-    )
-    
-    print(f"Restoration effect: {result.restoration_effect}")
+# Run causal tracing experiments
+trace_result = ablation_dashboard.causal_trace(
+    "The Eiffel Tower is located in",
+    subject_tokens=["Eiffel", "Tower"],
+    target_position=-1,
+    visualize=True
+)
+
+print(f"Critical components found: {len(patch_result.patch_effects)}")
 ```
 
 ### Attention Analysis
 ```python
-from interpboard.circuits import AttentionHeadAblator
+# Attention analysis is integrated into the attribution dashboard
+result = attribution_dashboard.analyze(
+    "The cat sat on the mat.",
+    methods=["attention_rollout"],  # Focus on attention-based methods
+    visualize=True,
+    interactive=True
+)
 
-with AttentionHeadAblator(model, tokenizer) as ablator:
-    results = ablator.systematic_head_ablation(
-        "The cat sat on the mat.",
-        layers=[8, 9, 10, 11],
-        heads=list(range(12))
-    )
-    
-    critical_heads = ablator.find_critical_heads(results)
-    print(f"Critical heads: {critical_heads}")
+# For detailed attention head analysis, use the ablation dashboard
+head_results = ablation_dashboard.analyze_attention_heads(
+    "The cat sat on the mat.",
+    layers=[8, 9, 10, 11],
+    visualize=True
+)
+
+print(f"Attention patterns analyzed across {len(head_results.head_effects)} heads")
 ```
 
 ## Documentation

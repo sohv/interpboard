@@ -1,449 +1,186 @@
 #!/usr/bin/env python3
+"""
+GPT-2 Demo using InterpBoard Unified Dashboard with Interactive Plotly Visualizations
+
+This demo showcases comprehensive interpretability analysis using the unified dashboard
+with interactive Plotly visualizations that work in both local and remote environments.
+"""
 
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import seaborn as sns
 import os
 import sys
 
-sys.path.append('../')
+# Add current directory to path for imports
+sys.path.insert(0, os.path.dirname(__file__))
 
 try:
-    from interpboard import load_model_and_tokenizer, get_config
-    from interpboard.attribution import GradientAttributor, AttentionAttributor, AttributionVisualizer
-    from interpboard.patching import ActivationPatcher, CausalTracer
-    from interpboard.circuits import LogitLens, NeuronAnalyzer, AttentionHeadAblator
-    from interpboard.visualization import TextOverlayVisualizer, HeatmapVisualizer
+    from interpboard.dashboards import create_unified_dashboard
     INTERPBOARD_AVAILABLE = True
+    print("✅ InterpBoard dashboards available")
 except ImportError as e:
-    print(f"Warning: InterpBoard not fully available: {e}")
+    print(f"❌ InterpBoard not available: {e}")
     print("Please install dependencies: pip install torch transformers matplotlib seaborn plotly rich tqdm einops")
     INTERPBOARD_AVAILABLE = False
 
 def main():
-    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
+    """
+    Main demo function showcasing InterpBoard unified dashboard capabilities.
+    """
+    print("🚀 GPT-2 InterpBoard Dashboard Demo")
+    print("=" * 60)
+    
     if not INTERPBOARD_AVAILABLE:
-        print("❌ InterpBoard not available. Please install dependencies.")
-        print("Run: pip install torch transformers matplotlib seaborn plotly rich")
-        return
+        print("❌ InterpBoard dashboards not available. Please install dependencies.")
+        print("Run: pip install torch transformers matplotlib seaborn plotly rich tqdm einops")
+        return False
 
-    model_name = "gpt2"
-    print(f"Loading {model_name}...")
-
+    # Set environment for cleaner output
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+    
+    # Create unified dashboards
+    print("📦 Creating unified InterpBoard dashboards...")
     try:
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name, local_files_only=False)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-
-        model = GPT2LMHeadModel.from_pretrained(
-            model_name,
-            local_files_only=False,
-            torch_dtype=torch.float32,
-            output_attentions=True,  # Force attention output
-        )
-
-        if device.type == "cuda":
-            model = model.half()
-        model = model.to(device)
-        model.eval()
-
-        print(f"✅ Successfully loaded model: {model_name}")
-        print(f"📊 Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-        
+        attribution_dashboard, ablation_dashboard = create_unified_dashboard("gpt2")
+        print("✅ Dashboards created successfully!")
+        print(f"🖥️  Device: {attribution_dashboard.device}")
+        print(f"📊 Model parameters: {sum(p.numel() for p in attribution_dashboard.model.parameters()):,}")
     except Exception as e:
-        print(f"❌ Error loading model: {e}")
-        device = torch.device("cpu")
-        model = GPT2LMHeadModel.from_pretrained(model_name, torch_dtype=torch.float32, output_attentions=True)
-        model = model.to(device)
-        model.eval()
-        print(f"✅ Loaded on CPU: {model_name}")
+        print(f"❌ Error creating dashboards: {e}")
+        return False
 
-    text = "The Eiffel Tower is located in Paris, the capital of France."
-    print(f"Analyzing text: '{text}'")
+    # Demo text
+    demo_text = "The Eiffel Tower is located in Paris, the capital of France."
+    print(f"\n🔍 Analyzing: '{demo_text}'")
 
-    # Test if model supports attention output
-    print("\n🔧 TESTING MODEL CAPABILITIES")
-    try:
-        test_inputs = tokenizer("Hello world", return_tensors="pt").to(device)
-        with torch.no_grad():
-            test_outputs = model(**test_inputs, output_attentions=True)
-        
-        if hasattr(test_outputs, 'attentions') and test_outputs.attentions is not None:
-            if test_outputs.attentions[0] is not None:
-                print("✅ Model supports attention output")
-                attention_supported = True
-            else:
-                print("⚠️  Model returns None for attention weights")
-                attention_supported = False
-        else:
-            print("❌ Model does not support attention output")
-            attention_supported = False
-    except Exception as e:
-        print(f"❌ Error testing attention support: {e}")
-        attention_supported = False
-
-    # Attribution Analysis
-    print("\n📊 ATTRIBUTION ANALYSIS")
-    grad_attributor = GradientAttributor(model, tokenizer, device)
+    # 1. COMPREHENSIVE SINGLE TEXT ANALYSIS
+    print("\n📊 COMPREHENSIVE ATTRIBUTION ANALYSIS")
+    print("-" * 50)
     
     try:
-        # Try simpler gradient method first
-        gradient_result = grad_attributor.vanilla_gradient(text)
-        print("VANILLA GRADIENT:")
-        top_indices = torch.argsort(gradient_result.attributions, descending=True)[:5]
-        print("Top attributed tokens:")
-        for i, idx in enumerate(top_indices):
-            token = gradient_result.tokens[idx]
-            score = gradient_result.attributions[idx].item()
-            print(f"  {i+1}. '{token}': {score:.4f}")
-    except Exception as e:
-        print(f"Gradient attribution failed: {e}")
-
-    # Attention Analysis
-    print("\n👁️ ATTENTION ANALYSIS")
-    if not attention_supported:
-        print("⚠️  Skipping attention analysis - model does not support attention output")
-    else:
-        try:
-            attn_attributor = AttentionAttributor(model, tokenizer, device)
-            rollout_result = attn_attributor.attention_rollout(text)
-            
-            print("ATTENTION ROLLOUT:")
-            top_indices = torch.argsort(rollout_result.attributions, descending=True)[:5]
-            print("Top attributed tokens:")
-            for i, idx in enumerate(top_indices):
-                token = rollout_result.tokens[idx]
-                score = rollout_result.attributions[idx].item()
-                print(f"  {i+1}. '{token}': {score:.4f}")
-        except Exception as e:
-            print(f"Attention rollout failed: {e}")
-            # Manual attention analysis with better error handling
-            try:
-                inputs = tokenizer(text, return_tensors="pt").to(device)
-                with torch.no_grad():
-                    outputs = model(**inputs, output_attentions=True)
-                
-                # Check if attention weights are actually returned
-                if hasattr(outputs, 'attentions') and outputs.attentions is not None and len(outputs.attentions) > 0:
-                    attentions = outputs.attentions
-                    # Check if first attention layer is not None
-                    if attentions[0] is not None:
-                        tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
-                        
-                        # Simple attention aggregation
-                        last_layer_attn = attentions[-1][0]  # Last layer, remove batch dim
-                        avg_attn = last_layer_attn.mean(dim=0)  # Average over heads
-                        token_importance = avg_attn[-1, :]  # Attention to last token
-                        
-                        top_indices = torch.argsort(token_importance, descending=True)[:5]
-                        print("Top attended tokens (manual calculation):")
-                        for i, idx in enumerate(top_indices):
-                            if idx < len(tokens):
-                                token = tokens[idx]
-                                score = token_importance[idx].item()
-                                print(f"  {i+1}. '{token}': {score:.4f}")
-                    else:
-                        print("Attention layers contain None values - model may not support attention output")
-                else:
-                    print("Model does not return attention weights - this is normal for some model configurations")
-                    print("Skipping attention analysis...")
-            except Exception as e2:
-                print(f"Manual attention analysis also failed: {e2}")
-                print("Skipping attention analysis completely...")
-
-    # Visualization (simplified)
-    print("\n📊 VISUALIZATION")
-    try:
-        attr_viz = AttributionVisualizer()
-        text_viz = TextOverlayVisualizer()
-        
-        # Try to create visualization with gradient result if available
-        if 'gradient_result' in locals():
-            fig = attr_viz.plot_token_heatmap(
-                gradient_result,
-                title="Token Attribution",
-                show_values=True
-            )
-            plt.show()
-    except Exception as e:
-        print(f"Visualization failed: {e}")
-        print("Skipping visualization...")
-
-    # Activation Patching (simplified)
-    print("\n🔗 ACTIVATION PATCHING")
-    try:
-        with ActivationPatcher(model, tokenizer, device) as patcher:
-            critical_components = patcher.find_critical_components(
-                text,
-                metric="logit_l2_diff",
-                threshold=0.1
-            )
-            
-            print(f"Found {len(critical_components)} critical components:")
-            for (location, impact), result in critical_components[:5]:
-                print(f"  {location.layer_idx}_{location.component}", end="")
-                if location.head_idx is not None:
-                    print(f"_H{location.head_idx}", end="")
-                print(f": {impact:.4f}")
-    except Exception as e:
-        print(f"Activation patching failed: {e}")
-        print("Skipping activation patching...")
-
-    # Causal Tracing (simplified)
-    print("\n🔬 CAUSAL TRACING")
-    try:
-        with CausalTracer(model, tokenizer, device) as tracer:
-            trace_result = tracer.trace_causal_effect(
-                text="The Eiffel Tower is located in",
-                subject_tokens=["Eiffel", "Tower"],
-                target_token_position=-1
-            )
-            
-            print("CAUSAL TRACING RESULTS:")
-            print(f"Baseline score: {trace_result.baseline_score:.4f}")
-            print(f"Corrupted score: {trace_result.corrupted_score:.4f}")
-            
-            sorted_effects = sorted(
-                trace_result.trace_results.items(),
-                key=lambda x: x[1]["restoration_effect"],
-                reverse=True
-            )
-            
-            print("Top restoration effects:")
-            for component, metrics in sorted_effects[:5]:
-                effect = metrics["restoration_effect"]
-                print(f"  {component}: {effect:.4f}")
-    except Exception as e:
-        print(f"Causal tracing failed: {e}")
-        print("Skipping causal tracing...")
-
-    # Attention Visualization (manual implementation)
-    print("\n👁️ ATTENTION VISUALIZATION")
-    try:
-        inputs = tokenizer(text, return_tensors="pt").to(device)
-        with torch.no_grad():
-            outputs = model(**inputs, output_attentions=True)
-
-        if hasattr(outputs, 'attentions') and outputs.attentions is not None and len(outputs.attentions) > 0:
-            attentions = outputs.attentions
-            # Check if attention weights are actually valid
-            if attentions[0] is not None:
-                tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
-                
-                print(f"Got attention weights for {len(attentions)} layers")
-                print(f"Tokens: {tokens}")
-                
-                try:
-                    heatmap_viz = HeatmapVisualizer()
-                    last_layer_attention = attentions[-1][0]
-                    
-                    fig = heatmap_viz.attention_heatmap(
-                        last_layer_attention[0],
-                        tokens,
-                        title="Attention Pattern - Last Layer, Head 0",
-                        layer_idx=len(attentions)-1,
-                        head_idx=0,
-                        show_values=False
-                    )
-                    plt.show()
-                except Exception as e:
-                    print(f"Attention visualization failed: {e}")
-                    # Simple manual visualization
-                    import matplotlib.pyplot as plt
-                    last_attn = attentions[-1][0, 0].cpu().numpy()
-                    
-                    plt.figure(figsize=(10, 8))
-                    plt.imshow(last_attn, cmap='Blues')
-                    plt.title("Attention Pattern (Last Layer, Head 0)")
-                    plt.xlabel("Token Position")
-                    plt.ylabel("Token Position")
-                    plt.colorbar()
-                    
-                    # Add token labels
-                    plt.xticks(range(len(tokens)), tokens, rotation=45)
-                    plt.yticks(range(len(tokens)), tokens)
-                    plt.tight_layout()
-                    plt.show()
-            else:
-                print("Attention weights are None - model configuration issue")
-        else:
-            print("No attention weights available - model may not support attention output")
-    except Exception as e:
-        print(f"Attention visualization failed: {e}")
-        print("Skipping attention visualization...")
-
-    # Logit Lens Analysis (simplified)
-    print("\n🔬 LOGIT LENS ANALYSIS")
-    try:
-        logit_lens = LogitLens(model, tokenizer, device)
-        lens_result = logit_lens.analyze(
-            text,
-            layers=[0, 6, 11],
-            top_k=3
+        # Run all attribution methods with interactive visualizations
+        result = attribution_dashboard.analyze(
+            demo_text,
+            methods=["vanilla_gradient", "integrated_gradients", "attention_rollout"],
+            visualize=True,
+            interactive=True  # Creates interactive Plotly plots
         )
         
-        last_position = len(lens_result.tokens) - 1
-        print(f"Predictions for position {last_position}:")
+        print(f"✅ Analysis completed for {len(result.attribution_results)} methods")
         
-        for layer_idx in sorted(lens_result.layer_predictions.keys()):
-            if layer_idx in lens_result.top_tokens:
-                top_tokens = lens_result.top_tokens[layer_idx][last_position]
-                print(f"  Layer {layer_idx}: {top_tokens[:3]}")
+        # Display summary
+        print("\n📈 Attribution Summary:")
+        for method, method_result in result.attribution_results.items():
+            attrs = method_result.attributions
+            print(f"  {method.replace('_', ' ').title()}:")
+            print(f"    Range: [{attrs.min():.4f}, {attrs.max():.4f}]")
+            print(f"    Mean: {attrs.mean():.4f}")
+            
+            # Show top attributed token
+            top_idx = torch.argmax(torch.abs(attrs))
+            top_token = method_result.tokens[top_idx]
+            top_score = attrs[top_idx].item()
+            print(f"    Most important: '{top_token}' ({top_score:+.4f})")
+    
     except Exception as e:
-        print(f"Logit lens analysis failed: {e}")
-        print("Skipping logit lens...")
+        print(f"❌ Single text analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
 
-    # Attention Head Ablation (simplified)
-    print("\n🎯 ATTENTION HEAD ABLATION")
-    try:
-        with AttentionHeadAblator(model, tokenizer, device) as ablator:
-            head_results = ablator.systematic_head_ablation(
-                text,
-                layers=[10, 11],
-                heads=[0, 1, 2, 3],
-                ablation_type="zero"
-            )
-            
-            print("HEAD ABLATION RESULTS:")
-            print(f"Baseline score: {head_results.baseline_score:.4f}")
-            
-            critical_heads = ablator.find_critical_heads(
-                head_results,
-                threshold=0.01,
-                top_k=5
-            )
-            
-            print("Most critical heads:")
-            for head_id, impact in critical_heads:
-                print(f"  {head_id}: {impact:.4f}")
-    except Exception as e:
-        print(f"Head ablation failed: {e}")
-        print("Skipping head ablation...")
-
-    # Neuron Analysis (simplified)
-    print("\n🧠 NEURON ANALYSIS")
-    try:
-        neuron_analyzer = NeuronAnalyzer(model, tokenizer, device)
-        neuron_results = neuron_analyzer.extract_neuron_activations(
-            text,
-            components=["mlp"],
-            layers=[10]
-        )
-        
-        print("NEURON ANALYSIS:")
-        for neuron_id, stats in list(neuron_results.activation_statistics.items())[:3]:
-            print(f"  {neuron_id}:")
-            print(f"    Mean: {stats['mean']:.4f}, Std: {stats['std']:.4f}")
-            print(f"    Max: {stats['max']:.4f}, Sparsity: {stats['sparsity']:.4f}")
-    except Exception as e:
-        print(f"Neuron analysis failed: {e}")
-        print("Skipping neuron analysis...")
-
-    # Comprehensive Dashboard (simplified)
-    def create_interpretability_dashboard(text, model, tokenizer, device):
-        print(f"\n🔍 INTERPRETABILITY DASHBOARD")
-        print(f"Text: '{text}'")
-        print("=" * 60)
-        
-        try:
-            grad_attributor = GradientAttributor(model, tokenizer, device)
-            ig_result = grad_attributor.vanilla_gradient(text)
-            top_idx = torch.argmax(ig_result.attributions)
-            top_token = ig_result.tokens[top_idx]
-            top_score = ig_result.attributions[top_idx].item()
-            
-            print(f"\n📊 ATTRIBUTION ANALYSIS")
-            print(f"Most important token: '{top_token}' (score: {top_score:.4f})")
-        except Exception as e:
-            print(f"\n📊 ATTRIBUTION ANALYSIS")
-            print(f"Attribution analysis failed: {e}")
-        
-        try:
-            with ActivationPatcher(model, tokenizer, device) as patcher:
-                critical_components = patcher.find_critical_components(
-                    text, threshold=0.05
-                )
-                
-                print(f"\n🔗 CAUSAL ANALYSIS")
-                if critical_components:
-                    top_component = critical_components[0]
-                    location, impact = top_component
-                    comp_name = f"Layer {location.layer_idx}, {location.component}"
-                    if location.head_idx is not None:
-                        comp_name += f", Head {location.head_idx}"
-                    print(f"Most critical component: {comp_name} (impact: {impact:.4f})")
-                else:
-                    print("No critical components found above threshold")
-        except Exception as e:
-            print(f"\n🔗 CAUSAL ANALYSIS")
-            print(f"Causal analysis failed: {e}")
-        
-        # Simple attention analysis
-        print(f"\n👁️ ATTENTION ANALYSIS")
-        try:
-            inputs = tokenizer(text, return_tensors="pt").to(device)
-            with torch.no_grad():
-                outputs = model(**inputs, output_attentions=True)
-            
-            if hasattr(outputs, 'attentions') and outputs.attentions is not None and len(outputs.attentions) > 0:
-                attentions = outputs.attentions
-                # Check if attention weights are valid
-                if attentions[0] is not None:
-                    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
-                    last_layer_attn = attentions[-1][0]
-                    avg_attn = last_layer_attn.mean(dim=0)
-                    token_importance = avg_attn[-1, :]
-                    
-                    top_idx = torch.argmax(token_importance)
-                    if top_idx < len(tokens):
-                        top_token = tokens[top_idx]
-                        top_score = token_importance[top_idx].item()
-                        print(f"Most attended token: '{top_token}' (score: {top_score:.4f})")
-                    else:
-                        print("Attention analysis completed")
-                else:
-                    print("Attention weights are None - model configuration issue")
-            else:
-                print("No attention data available")
-        except Exception as e:
-            print(f"Attention analysis failed: {e}")
-        
-        print("\n" + "=" * 60)
-        print("✅ Dashboard complete!")
-
-    create_interpretability_dashboard(text, model, tokenizer, device)
-
-    # Comparative Analysis (simplified)
-    test_texts = [
-        "The Eiffel Tower is located in Paris, the capital of France.",
-        "Albert Einstein developed the theory of relativity.", 
-        "The Amazon River flows through Brazil.",
+    # 2. COMPARATIVE ANALYSIS WITH INTERACTIVE DASHBOARD
+    print("\n🔄 COMPARATIVE ANALYSIS DASHBOARD")
+    print("-" * 50)
+    
+    comparison_texts = [
+        "The Eiffel Tower is located in Paris, France.",
+        "Albert Einstein developed the theory of relativity.",
+        "The Amazon River flows through South America.", 
         "William Shakespeare wrote Romeo and Juliet."
     ]
-
-    print("\n🔄 COMPARATIVE ANALYSIS")
-    for i, test_text in enumerate(test_texts, 1):
-        print(f"{i}. {test_text}")
+    
+    try:
+        # Create interactive comparison visualization
+        comparison_results = attribution_dashboard.compare_texts(
+            comparison_texts,
+            method="integrated_gradients",
+            visualize=True,
+            interactive=True  # Creates interactive comparison plots
+        )
         
-        try:
-            grad_attributor = GradientAttributor(model, tokenizer, device)
-            result = grad_attributor.vanilla_gradient(test_text)
+        print(f"✅ Comparative analysis completed for {len(comparison_texts)} texts")
+        
+        # Show comparison summary
+        print("\n📊 Comparison Summary:")
+        for i, (text, result) in enumerate(comparison_results.items(), 1):
+            method_result = result.attribution_results["integrated_gradients"]
+            attrs = method_result.attributions
             
-            top_idx = torch.argmax(result.attributions)
-            top_token = result.tokens[top_idx]
-            top_score = result.attributions[top_idx].item()
+            # Find most important token
+            top_idx = torch.argmax(torch.abs(attrs))
+            top_token = method_result.tokens[top_idx]
+            top_score = attrs[top_idx].item()
             
-            print(f"   Most important token: '{top_token}' (score: {top_score:.4f})")
-        except Exception as e:
-            print(f"   Analysis failed: {e}")
-        print()
+            text_preview = text[:40] + "..." if len(text) > 40 else text
+            print(f"  {i}. {text_preview}")
+            print(f"     Key token: '{top_token}' ({top_score:+.4f})")
+    
+    except Exception as e:
+        print(f"❌ Comparative analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
 
-    print("\n✅ Analysis complete!")
+    # 3. ABLATION ANALYSIS DEMO
+    print("\n🔬 ABLATION ANALYSIS DEMO") 
+    print("-" * 50)
+    
+    try:
+        print("🔧 Running activation patching analysis...")
+        
+        # Simple ablation example
+        patch_result = ablation_dashboard.patch_activations(
+            demo_text,
+            layer_range=(6, 8),  # Focus on middle layers
+            visualize=True
+        )
+        
+        print("✅ Ablation analysis completed")
+        print(f"📊 Analyzed {len(patch_result.patch_effects)} patch effects")
+    
+    except Exception as e:
+        print(f"⚠️  Ablation analysis skipped: {e}")
+        print("   (This is normal - ablation requires more complex setup)")
+
+    # 4. GENERATE SUMMARY REPORT
+    print("\n📋 ANALYSIS SUMMARY REPORT")
+    print("=" * 60)
+    
+    print(f"🎯 Demo Text: '{demo_text}'")
+    print(f"🤖 Model: GPT-2 ({sum(p.numel() for p in attribution_dashboard.model.parameters()):,} params)")
+    print(f"💻 Device: {attribution_dashboard.device}")
+    print(f"🌍 Environment: {'Remote' if attribution_dashboard.is_remote else 'Local'}")
+    
+    print(f"\n📊 Generated Interactive Visualizations:")
+    print(f"   • Individual attribution plots (3 methods)")  
+    print(f"   • Comparative analysis plots (4 texts)")
+    print(f"   • Interactive HTML files saved for viewing")
+    
+    print(f"\n🌐 How to View Results:")
+    if attribution_dashboard.is_remote:
+        print(f"   1. Interactive HTML files saved to current directory")
+        print(f"   2. Download and open in your browser for full interactivity")
+        print(f"   3. Files include: hover tooltips, zoom, pan, download options")
+    else:
+        print(f"   1. Interactive plots opened automatically in browser")  
+        print(f"   2. Enjoy hover tooltips, zoom, pan, and download features")
+    
+    print(f"\n✅ GPT-2 InterpBoard Dashboard Demo Complete!")
+    return True
+
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    if success:
+        print(f"\n🎉 Demo completed successfully!")
+        print(f"📁 Check current directory for interactive HTML files")
+    else:
+        print(f"\n❌ Demo failed - check error messages above")
+        sys.exit(1)
