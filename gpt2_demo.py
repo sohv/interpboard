@@ -1,24 +1,20 @@
-#!/usr/bin/env python3
 """
 GPT-2 Demo using InterpBoard Unified Dashboard with Interactive Plotly Visualizations
-
-This demo showcases comprehensive interpretability analysis using the unified dashboard
-with interactive Plotly visualizations that work in both local and remote environments.
 """
 
 import torch
 import os
 import sys
 
-# Add current directory to path for imports
+# add current directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
 try:
     from interpboard.dashboards import create_unified_dashboard
     INTERPBOARD_AVAILABLE = True
-    print("✅ InterpBoard dashboards available")
+    print(" InterpBoard dashboards available")
 except ImportError as e:
-    print(f"❌ InterpBoard not available: {e}")
+    print(f" InterpBoard not available: {e}")
     print("Please install dependencies: pip install torch transformers matplotlib seaborn plotly rich tqdm einops")
     INTERPBOARD_AVAILABLE = False
 
@@ -26,11 +22,11 @@ def main():
     """
     Main demo function showcasing InterpBoard unified dashboard capabilities.
     """
-    print("🚀 GPT-2 InterpBoard Dashboard Demo")
+    print(" GPT-2 InterpBoard Dashboard Demo")
     print("=" * 60)
     
     if not INTERPBOARD_AVAILABLE:
-        print("❌ InterpBoard dashboards not available. Please install dependencies.")
+        print(" InterpBoard dashboards not available. Please install dependencies.")
         print("Run: pip install torch transformers matplotlib seaborn plotly rich tqdm einops")
         return False
 
@@ -38,22 +34,22 @@ def main():
     os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
     
     # Create unified dashboards
-    print("📦 Creating unified InterpBoard dashboards...")
+    print(" Creating unified InterpBoard dashboards...")
     try:
         attribution_dashboard, ablation_dashboard = create_unified_dashboard("gpt2")
-        print("✅ Dashboards created successfully!")
-        print(f"🖥️  Device: {attribution_dashboard.device}")
-        print(f"📊 Model parameters: {sum(p.numel() for p in attribution_dashboard.model.parameters()):,}")
+        print(" Dashboards created successfully!")
+        print(f" Device: {attribution_dashboard.device}")
+        print(f" Model parameters: {sum(p.numel() for p in attribution_dashboard.model.parameters()):,}")
     except Exception as e:
-        print(f"❌ Error creating dashboards: {e}")
+        print(f" Error creating dashboards: {e}")
         return False
 
-    # Demo text
+    # demo text
     demo_text = "The Eiffel Tower is located in Paris, the capital of France."
-    print(f"\n🔍 Analyzing: '{demo_text}'")
+    print(f"\n Analyzing: '{demo_text}'")
 
     # 1. COMPREHENSIVE SINGLE TEXT ANALYSIS
-    print("\n📊 COMPREHENSIVE ATTRIBUTION ANALYSIS")
+    print("\n COMPREHENSIVE ATTRIBUTION ANALYSIS")
     print("-" * 50)
     
     try:
@@ -65,10 +61,10 @@ def main():
             interactive=True  # Creates interactive Plotly plots
         )
         
-        print(f"✅ Analysis completed for {len(result.attribution_results)} methods")
+        print(f" Analysis completed for {len(result.attribution_results)} methods")
         
         # Display summary
-        print("\n📈 Attribution Summary:")
+        print("\n Attribution Summary:")
         for method, method_result in result.attribution_results.items():
             attrs = method_result.attributions
             print(f"  {method.replace('_', ' ').title()}:")
@@ -82,12 +78,12 @@ def main():
             print(f"    Most important: '{top_token}' ({top_score:+.4f})")
     
     except Exception as e:
-        print(f"❌ Single text analysis failed: {e}")
+        print(f" Single text analysis failed: {e}")
         import traceback
         traceback.print_exc()
 
     # 2. COMPARATIVE ANALYSIS WITH INTERACTIVE DASHBOARD
-    print("\n🔄 COMPARATIVE ANALYSIS DASHBOARD")
+    print("\n COMPARATIVE ANALYSIS DASHBOARD")
     print("-" * 50)
     
     comparison_texts = [
@@ -106,10 +102,10 @@ def main():
             interactive=True  # Creates interactive comparison plots
         )
         
-        print(f"✅ Comparative analysis completed for {len(comparison_texts)} texts")
+        print(f" Comparative analysis completed for {len(comparison_texts)} texts")
         
         # Show comparison summary
-        print("\n📊 Comparison Summary:")
+        print("\n Comparison Summary:")
         for i, (text, result) in enumerate(comparison_results.items(), 1):
             method_result = result.attribution_results["integrated_gradients"]
             attrs = method_result.attributions
@@ -124,16 +120,16 @@ def main():
             print(f"     Key token: '{top_token}' ({top_score:+.4f})")
     
     except Exception as e:
-        print(f"❌ Comparative analysis failed: {e}")
+        print(f" Comparative analysis failed: {e}")
         import traceback
         traceback.print_exc()
 
     # 3. ABLATION ANALYSIS DEMO
-    print("\n🔬 ABLATION ANALYSIS DEMO") 
+    print("\n ABLATION ANALYSIS DEMO") 
     print("-" * 50)
     
     try:
-        print("🔧 Running activation patching analysis...")
+        print(" Running activation patching analysis...")
         
         # Simple ablation example
         patch_result = ablation_dashboard.patch_activations(
@@ -142,28 +138,28 @@ def main():
             visualize=True
         )
         
-        print("✅ Ablation analysis completed")
-        print(f"📊 Analyzed {len(patch_result.patch_effects)} patch effects")
+        print(" Ablation analysis completed")
+        print(f" Analyzed {len(patch_result.patch_effects)} patch effects")
     
     except Exception as e:
-        print(f"⚠️  Ablation analysis skipped: {e}")
+        print(f" Ablation analysis skipped: {e}")
         print("   (This is normal - ablation requires more complex setup)")
 
     # 4. GENERATE SUMMARY REPORT
-    print("\n📋 ANALYSIS SUMMARY REPORT")
+    print("\n ANALYSIS SUMMARY REPORT")
     print("=" * 60)
     
-    print(f"🎯 Demo Text: '{demo_text}'")
-    print(f"🤖 Model: GPT-2 ({sum(p.numel() for p in attribution_dashboard.model.parameters()):,} params)")
-    print(f"💻 Device: {attribution_dashboard.device}")
-    print(f"🌍 Environment: {'Remote' if attribution_dashboard.is_remote else 'Local'}")
+    print(f" Demo Text: '{demo_text}'")
+    print(f" Model: GPT-2 ({sum(p.numel() for p in attribution_dashboard.model.parameters()):,} params)")
+    print(f" Device: {attribution_dashboard.device}")
+    print(f" Environment: {'Remote' if attribution_dashboard.is_remote else 'Local'}")
     
-    print(f"\n📊 Generated Interactive Visualizations:")
+    print(f"\n Generated Interactive Visualizations:")
     print(f"   • Individual attribution plots (3 methods)")  
     print(f"   • Comparative analysis plots (4 texts)")
     print(f"   • Interactive HTML files saved for viewing")
     
-    print(f"\n🌐 How to View Results:")
+    print(f"\n How to View Results:")
     if attribution_dashboard.is_remote:
         print(f"   1. Interactive HTML files saved to current directory")
         print(f"   2. Download and open in your browser for full interactivity")
@@ -172,15 +168,15 @@ def main():
         print(f"   1. Interactive plots opened automatically in browser")  
         print(f"   2. Enjoy hover tooltips, zoom, pan, and download features")
     
-    print(f"\n✅ GPT-2 InterpBoard Dashboard Demo Complete!")
+    print(f"\n GPT-2 InterpBoard Dashboard Demo Complete!")
     return True
 
 
 if __name__ == "__main__":
     success = main()
     if success:
-        print(f"\n🎉 Demo completed successfully!")
+        print(f"\n demo completed successfully!")
         print(f"📁 Check current directory for interactive HTML files")
     else:
-        print(f"\n❌ Demo failed - check error messages above")
+        print(f"\n demo failed - check error messages above")
         sys.exit(1)

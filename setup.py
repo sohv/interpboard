@@ -10,16 +10,16 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="interpboard",
     version="0.1.0",
-    author="LLM Interpretability Team",
-    author_email="contact@example.com",  # Replace with your email
+    author="Sohan Venkatesh",
+    author_email="soh.venkatesh@gmail.com",
     description="A comprehensive toolkit for interpreting and understanding large language models",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/interpboard",  # Replace with your GitHub URL
+    url="https://github.com/sohv/interpboard",
     project_urls={
-        "Bug Tracker": "https://github.com/yourusername/interpboard/issues",
-        "Documentation": "https://github.com/yourusername/interpboard/blob/main/README.md",
-        "Source Code": "https://github.com/yourusername/interpboard",
+        "Bug Tracker": "https://github.com/sohv/interpboard/issues",
+        "Documentation": "https://github.com/sohv/interpboard/blob/main/README.md",
+        "Source Code": "https://github.com/sohv/interpboard",
     },
     packages=find_packages(),
     classifiers=[
