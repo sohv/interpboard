@@ -128,12 +128,52 @@ with AttentionHeadAblator(model, tokenizer) as ablator:
 
 ## Supported Models
 
-The library works with any transformer model from Hugging Face:
+### Model Support Matrix
 
-- **GPT family**: GPT-2, GPT-Neo, GPT-J
-- **LLaMA family**: LLaMA, LLaMA-2, Code Llama
-- **Mistral family**: Mistral 7B, Mixtral
-- **Other architectures**: BERT, RoBERTa, T5 (experimental)
+| Model Family | Example Models | Attribution | Visualization | Logit Lens | Activation Patching | Neuron Analysis | Head Ablation | Status |
+|--------------|----------------|-------------|---------------|------------|-------------------|-----------------|---------------|---------|
+| **GPT-2** | `gpt2`, `gpt2-medium`, `gpt2-large`, `gpt2-xl` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
+| **LLaMA** | `meta-llama/Llama-2-7b-hf`, `meta-llama/Llama-2-13b-hf`, `meta-llama/Llama-2-70b-hf` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
+| **Code Llama** | `codellama/CodeLlama-7b-hf`, `codellama/CodeLlama-13b-hf` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
+| **Mistral** | `mistralai/Mistral-7B-v0.1`, `mistralai/Mistral-7B-Instruct-v0.1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
+| **GPT-Neo/J** | `EleutherAI/gpt-neo-1.3B`, `EleutherAI/gpt-j-6B` | ✅ | ✅ | ⚠️ | ❌ | ❌ | ⚠️ | **Limited Support** |
+| **OPT** | `facebook/opt-1.3b`, `facebook/opt-2.7b`, `facebook/opt-6.7b` | ✅ | ✅ | ⚠️ | ❌ | ❌ | ⚠️ | **Limited Support** |
+| **BLOOM** | `bigscience/bloom-1b1`, `bigscience/bloom-3b`, `bigscience/bloom-7b1` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
+| **T5** | `t5-small`, `t5-base`, `t5-large` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
+| **BERT/RoBERTa** | `bert-base-uncased`, `roberta-base` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
+
+### Legend
+- ✅ **Full Support**: All features work as expected
+- ⚠️ **Partial Support**: Basic functionality works, some advanced features may fail
+- ❌ **Not Supported**: Feature will raise `NotImplementedError`
+
+### Support Details
+
+#### **Fully Supported Models** 
+All interpretability methods work seamlessly:
+- **GPT-2 Family**: Complete implementation with extensive testing
+- **LLaMA Family**: Full support including LLaMA-2 and Code Llama variants
+- **Mistral Family**: Complete support for all Mistral 7B variants
+
+#### **Limited Support Models**
+Basic attribution and visualization work, but advanced features are limited:
+- **GPT-Neo/GPT-J**: Attribution methods work, but activation patching and neuron analysis may fail
+- **OPT Models**: Similar limitations to GPT-Neo/J family
+
+#### **Experimental Support**
+Only basic functionality available, most advanced features will fail:
+- **Encoder-Only Models** (BERT, RoBERTa): Limited to attribution analysis
+- **Encoder-Decoder Models** (T5, BART): Partial support with potential issues
+- **Other Architectures**: May work for basic attribution but not guaranteed
+
+### Adding New Model Support
+
+To extend support for additional models:
+1. The model must be compatible with HuggingFace Transformers
+2. Model architecture should follow standard transformer patterns
+3. For full support, contribute model-specific component mappings
+
+See our [Model Support Guide](docs/supported_models.md) for detailed information about extending model compatibility.
 
 ## Contributing
 

@@ -41,25 +41,23 @@ def load_model_and_tokenizer(
     
     logger.info(f"Loading model {model_name} on {device}")
     
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(
-            model_name,
-            torch_dtype=torch_dtype,
-            device_map=device if device != "auto" else "auto",
-            **model_kwargs
-        )
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype=torch_dtype,
+        device_map=device if device != "auto" else "auto",
+        output_attentions=True,
+        **model_kwargs
+    )
+    
+    # Ensure tokenizer has pad token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
         
-        # Ensure tokenizer has pad token
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-            
-        logger.info(f"Successfully loaded {model_name}")
-        return model, tokenizer
-        
-    except Exception as e:
-        logger.error(f"Failed to load model {model_name}: {e}")
-        raise
+    logger.info(f"Successfully loaded {model_name}")
+    return model, tokenizer
 
 
 def get_model_info(model: PreTrainedModel) -> Dict[str, Any]:
@@ -365,8 +363,11 @@ def batch_process(
         List of processed results
     """
     if show_progress:
-        from tqdm import tqdm
-        data = tqdm(data, desc="Processing")
+        try:
+            from tqdm import tqdm
+            data = tqdm(data, desc="Processing")
+        except ImportError:
+            pass  # Continue without progress bar if tqdm not available
     
     results = []
     for i in range(0, len(data), batch_size):

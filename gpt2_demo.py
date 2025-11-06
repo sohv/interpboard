@@ -10,16 +10,27 @@ import sys
 
 sys.path.append('../')
 
-from interpboard import load_model_and_tokenizer, get_config
-from interpboard.attribution import GradientAttributor, AttentionAttributor, AttributionVisualizer
-from interpboard.patching import ActivationPatcher, CausalTracer
-from interpboard.circuits import LogitLens, NeuronAnalyzer, AttentionHeadAblator
-from interpboard.visualization import TextOverlayVisualizer, HeatmapVisualizer
+try:
+    from interpboard import load_model_and_tokenizer, get_config
+    from interpboard.attribution import GradientAttributor, AttentionAttributor, AttributionVisualizer
+    from interpboard.patching import ActivationPatcher, CausalTracer
+    from interpboard.circuits import LogitLens, NeuronAnalyzer, AttentionHeadAblator
+    from interpboard.visualization import TextOverlayVisualizer, HeatmapVisualizer
+    INTERPBOARD_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: InterpBoard not fully available: {e}")
+    print("Please install dependencies: pip install torch transformers matplotlib seaborn plotly rich tqdm einops")
+    INTERPBOARD_AVAILABLE = False
 
 def main():
     os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
+
+    if not INTERPBOARD_AVAILABLE:
+        print("❌ InterpBoard not available. Please install dependencies.")
+        print("Run: pip install torch transformers matplotlib seaborn plotly rich")
+        return
 
     model_name = "gpt2"
     print(f"Loading {model_name}...")

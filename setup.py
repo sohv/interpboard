@@ -56,19 +56,19 @@ setup(
         "pandas>=1.3.0",
         "scipy>=1.7.0",
         
-        # Optional: web interfaces
-        "streamlit>=1.20.0",
-        "gradio>=3.0.0",
-        
-        # Jupyter support
-        "ipywidgets>=7.6.0",
-        "jupyter>=1.0.0",
-        
         # Utils
         "tqdm>=4.62.0",
         "einops>=0.6.0",
     ],
     extras_require={
+        "web": [
+            "streamlit>=1.20.0",
+            "gradio>=3.0.0",
+        ],
+        "jupyter": [
+            "ipywidgets>=7.6.0",
+            "jupyter>=1.0.0",
+        ],
         "dev": [
             "pytest>=6.0",
             "pytest-cov>=2.0",
@@ -83,6 +83,10 @@ setup(
             "myst-parser>=0.17.0",
         ],
         "all": [
+            "streamlit>=1.20.0",
+            "gradio>=3.0.0",
+            "ipywidgets>=7.6.0",
+            "jupyter>=1.0.0",
             "pytest>=6.0",
             "pytest-cov>=2.0",
             "black>=22.0",

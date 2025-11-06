@@ -336,38 +336,46 @@ class AblationDashboard:
         # Activation patching analysis
         if "patching" in analyses:
             print("🎯 Running activation patching...")
-            with ActivationPatcher(self.model, self.tokenizer, self.device) as patcher:
-                # Find critical components
-                critical_components = patcher.find_critical_components(
-                    text,
-                    threshold=0.05
-                )
-                patching_results["critical_components"] = critical_components
-                
-                # Systematic ablation on subset of layers
-                if len(layers) <= 6:  # Limit to avoid too many experiments
-                    ablation_results = patcher.run_systematic_ablation(
+            try:
+                with ActivationPatcher(self.model, self.tokenizer, self.device) as patcher:
+                    # Find critical components
+                    critical_components = patcher.find_critical_components(
                         text,
-                        layers=layers,
-                        components=["attention", "mlp"],
-                        heads=list(range(8))  # First 8 heads
+                        threshold=0.05
                     )
-                    patching_results["systematic_ablation"] = ablation_results
+                    patching_results["critical_components"] = critical_components
+                    
+                    # Systematic ablation on subset of layers
+                    if len(layers) <= 6:  # Limit to avoid too many experiments
+                        ablation_results = patcher.run_systematic_ablation(
+                            text,
+                            layers=layers,
+                            components=["attention", "mlp"],
+                            heads=list(range(8))  # First 8 heads
+                        )
+                        patching_results["systematic_ablation"] = ablation_results
+            except Exception as e:
+                print(f"Activation patching failed: {e}")
+                patching_results["error"] = str(e)
         
         # Causal tracing
         if "causal_tracing" in analyses:
             print("🔗 Running causal tracing...")
-            with CausalTracer(self.model, self.tokenizer, self.device) as tracer:
-                # Try to identify subject tokens automatically
-                words = text.split()
-                if len(words) >= 2:
-                    subject_tokens = words[:2]  # Take first two words as subject
-                    trace_result = tracer.trace_causal_effect(
-                        text=text,
-                        subject_tokens=subject_tokens,
-                        target_token_position=-1
-                    )
-                    patching_results["causal_tracing"] = trace_result
+            try:
+                with CausalTracer(self.model, self.tokenizer, self.device) as tracer:
+                    # Try to identify subject tokens automatically
+                    words = text.split()
+                    if len(words) >= 2:
+                        subject_tokens = words[:2]  # Take first two words as subject
+                        trace_result = tracer.trace_causal_effect(
+                            text=text,
+                            subject_tokens=subject_tokens,
+                            target_token_position=-1
+                        )
+                        patching_results["causal_tracing"] = trace_result
+            except Exception as e:
+                print(f"Causal tracing failed: {e}")
+                patching_results["causal_tracing_error"] = str(e)
         
         # Logit lens analysis
         if "logit_lens" in analyses:
@@ -390,26 +398,30 @@ class AblationDashboard:
         # Head ablation analysis
         if "head_ablation" in analyses:
             print("✂️ Running head ablation analysis...")
-            with AttentionHeadAblator(self.model, self.tokenizer, self.device) as ablator:
-                # Focus on subset of layers and heads to avoid too many experiments
-                test_layers = layers[-3:] if len(layers) > 3 else layers
-                test_heads = list(range(8))  # First 8 heads
-                
-                head_results = ablator.systematic_head_ablation(
-                    text,
-                    layers=test_layers,
-                    heads=test_heads,
-                    ablation_type="zero"
-                )
-                mechanistic_results["head_ablation"] = head_results
-                
-                # Find critical heads
-                critical_heads = ablator.find_critical_heads(
-                    head_results,
-                    threshold=0.05,
-                    top_k=10
-                )
-                mechanistic_results["critical_heads"] = critical_heads
+            try:
+                with AttentionHeadAblator(self.model, self.tokenizer, self.device) as ablator:
+                    # Focus on subset of layers and heads to avoid too many experiments
+                    test_layers = layers[-3:] if len(layers) > 3 else layers
+                    test_heads = list(range(8))  # First 8 heads
+                    
+                    head_results = ablator.systematic_head_ablation(
+                        text,
+                        layers=test_layers,
+                        heads=test_heads,
+                        ablation_type="zero"
+                    )
+                    mechanistic_results["head_ablation"] = head_results
+                    
+                    # Find critical heads
+                    critical_heads = ablator.find_critical_heads(
+                        head_results,
+                        threshold=0.05,
+                        top_k=10
+                    )
+                    mechanistic_results["critical_heads"] = critical_heads
+            except Exception as e:
+                print(f"Head ablation failed: {e}")
+                mechanistic_results["head_ablation_error"] = str(e)
         
         # Create visualizations
         if visualize:
