@@ -33,28 +33,28 @@ def main():
         'all_available': True
     }
 
-    print(f"📊 Dependency Status:")
-    print(f"  PyTorch: {'✅' if deps['torch'] else '❌'}")
-    print(f"  Transformers: {'✅' if deps['transformers'] else '❌'}")
-    print(f"  Matplotlib: {'✅' if deps['matplotlib'] else '❌'}")
-    print(f"  NumPy: {'✅' if deps['numpy'] else '❌'}")
+    print(f"Dependency Status:")
+    print(f"  PyTorch: {'YES' if deps['torch'] else 'NO'}")
+    print(f"  Transformers: {'YES' if deps['transformers'] else 'NO'}")
+    print(f"  Matplotlib: {'YES' if deps['matplotlib'] else 'NO'}")
+    print(f"  NumPy: {'YES' if deps['numpy'] else 'NO'}")
 
     missing = [k for k, v in deps.items() if not v and k != 'all_available']
 
     if missing:
-        print(f"\n⚠️  Missing dependencies: {missing}")
+        print(f"\nWARNING: Missing dependencies: {missing}")
         print("Install them with:")
         print(f"  pip install {' '.join(missing)}")
     else:
-        print("\n✅ All dependencies available!")
+        print("\nAll dependencies available!")
 
     # Test basic model loading if transformers is available
     if deps['transformers'] and deps['torch']:
-        print("\n🔧 Testing model loading...")
+        print("\nTesting model loading...")
         model, tokenizer = interpboard.load_model_and_tokenizer("gpt2")
-        print("✅ Model loading successful")
+        print("Model loading successful")
     else:
-        print("\n⚠️  Cannot test model loading without torch and transformers")
+        print("\nWARNING: Cannot test model loading without torch and transformers")
 
     # Show available components based on dependencies
     print("\n Available Components:")
@@ -99,10 +99,10 @@ def main():
         """)
 
     else:
-        print("  📦 Package structure loaded with fallback implementations")
-        print("  🔧 Install missing dependencies for full functionality")
+        print("  Package structure loaded with fallback implementations")
+        print("  Install missing dependencies for full functionality")
 
-    print("\n📚 Next Steps:")
+    print("\nNext Steps:")
     if missing:
         print(f"  1. Install dependencies: pip install {' '.join(missing)}")
         print("  2. Or install all at once: pip install -e .")
@@ -112,7 +112,7 @@ def main():
     print("  3. Explore Jupyter notebooks in examples/")
     print("  4. Read documentation in docs/")
 
-    print("\n✅ Quick start complete! The package structure is ready.")
+    print("\nQuick start complete! The package structure is ready.")
 
     return True
 

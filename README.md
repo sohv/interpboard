@@ -149,20 +149,20 @@ print(f"Attention patterns analyzed across {len(head_results.head_effects)} head
 
 | Model Family | Example Models | Attribution | Visualization | Logit Lens | Activation Patching | Neuron Analysis | Head Ablation | Status |
 |--------------|----------------|-------------|---------------|------------|-------------------|-----------------|---------------|---------|
-| **GPT-2** | `gpt2`, `gpt2-medium`, `gpt2-large`, `gpt2-xl` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
-| **LLaMA** | `meta-llama/Llama-2-7b-hf`, `meta-llama/Llama-2-13b-hf`, `meta-llama/Llama-2-70b-hf` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
-| **Code Llama** | `codellama/CodeLlama-7b-hf`, `codellama/CodeLlama-13b-hf` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
-| **Mistral** | `mistralai/Mistral-7B-v0.1`, `mistralai/Mistral-7B-Instruct-v0.1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **Full Support** |
-| **GPT-Neo/J** | `EleutherAI/gpt-neo-1.3B`, `EleutherAI/gpt-j-6B` | ✅ | ✅ | ⚠️ | ❌ | ❌ | ⚠️ | **Limited Support** |
-| **OPT** | `facebook/opt-1.3b`, `facebook/opt-2.7b`, `facebook/opt-6.7b` | ✅ | ✅ | ⚠️ | ❌ | ❌ | ⚠️ | **Limited Support** |
-| **BLOOM** | `bigscience/bloom-1b1`, `bigscience/bloom-3b`, `bigscience/bloom-7b1` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
-| **T5** | `t5-small`, `t5-base`, `t5-large` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
-| **BERT/RoBERTa** | `bert-base-uncased`, `roberta-base` | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | ❌ | **Experimental** |
+| **GPT-2** | `gpt2`, `gpt2-medium`, `gpt2-large`, `gpt2-xl` | YES | YES | YES | YES | YES | YES | **Full Support** |
+| **LLaMA** | `meta-llama/Llama-2-7b-hf`, `meta-llama/Llama-2-13b-hf`, `meta-llama/Llama-2-70b-hf` | YES | YES | YES | YES | YES | YES | **Full Support** |
+| **Code Llama** | `codellama/CodeLlama-7b-hf`, `codellama/CodeLlama-13b-hf` | YES | YES | YES | YES | YES | YES | **Full Support** |
+| **Mistral** | `mistralai/Mistral-7B-v0.1`, `mistralai/Mistral-7B-Instruct-v0.1` | YES | YES | YES | YES | YES | YES | **Full Support** |
+| **GPT-Neo/J** | `EleutherAI/gpt-neo-1.3B`, `EleutherAI/gpt-j-6B` | YES | YES | PARTIAL | NO | NO | PARTIAL | **Limited Support** |
+| **OPT** | `facebook/opt-1.3b`, `facebook/opt-2.7b`, `facebook/opt-6.7b` | YES | YES | PARTIAL | NO | NO | PARTIAL | **Limited Support** |
+| **BLOOM** | `bigscience/bloom-1b1`, `bigscience/bloom-3b`, `bigscience/bloom-7b1` | PARTIAL | PARTIAL | NO | NO | NO | NO | **Experimental** |
+| **T5** | `t5-small`, `t5-base`, `t5-large` | PARTIAL | PARTIAL | NO | NO | NO | NO | **Experimental** |
+| **BERT/RoBERTa** | `bert-base-uncased`, `roberta-base` | PARTIAL | PARTIAL | NO | NO | NO | NO | **Experimental** |
 
 ### Legend
-- ✅ **Full Support**: All features work as expected
-- ⚠️ **Partial Support**: Basic functionality works, some advanced features may fail
-- ❌ **Not Supported**: Feature will raise `NotImplementedError`
+- **Full Support**: All features work as expected
+- **Partial Support**: Basic functionality works, some advanced features may fail
+- **Not Supported**: Feature will raise `NotImplementedError`
 
 ### Support Details
 

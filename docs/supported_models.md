@@ -2,7 +2,7 @@
 
 The LLM Interpretability Dashboard supports a wide range of transformer-based language models through Hugging Face's Transformers library.
 
-## ✅ Fully Supported Models
+## Fully Supported Models
 
 ### GPT Family
 - **GPT-2** (all sizes: 117M, 345M, 762M, 1.5B)
@@ -43,7 +43,7 @@ The LLM Interpretability Dashboard supports a wide range of transformer-based la
 - **BLOOM** (BigScience)
   - `bigscience/bloom-560m`, `bigscience/bloom-1b1`, `bigscience/bloom-3b`, `bigscience/bloom-7b1`
 
-## 🔄 Experimental Support
+## Experimental Support
 
 ### Encoder-Decoder Models
 - **T5** (Google)
@@ -63,7 +63,7 @@ The LLM Interpretability Dashboard supports a wide range of transformer-based la
   - `roberta-base`, `roberta-large`
   - Attribution and attention analysis only
 
-## 🚀 Adding New Models
+## Adding New Models
 
 The library automatically detects model architecture and adapts accordingly. To add support for a new model:
 
@@ -105,7 +105,7 @@ attribution_dashboard, ablation_dashboard = create_unified_dashboard(
 )
 ```
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 ### Memory Requirements
 - **Large models** (>7B parameters) require significant GPU memory
@@ -117,7 +117,7 @@ attribution_dashboard, ablation_dashboard = create_unified_dashboard(
 - **Encoder-decoder models**: Separate analysis for encoder and decoder
 - **Mixture of Experts**: May require special handling for routing analysis
 
-## 🔧 Model-Specific Examples
+## Model-Specific Examples
 
 ### GPT-2 Large
 ```python
@@ -154,7 +154,7 @@ result = ablation_dashboard.analyze(
 )
 ```
 
-## 📊 Performance Considerations
+## Performance Considerations
 
 ### Model Size Guidelines
 - **Small models** (<1B): All features work smoothly

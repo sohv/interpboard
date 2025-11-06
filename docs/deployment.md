@@ -2,7 +2,7 @@
 
 This guide covers how to deploy the LLM Interpretability Dashboard as a library or package for different use cases.
 
-## 📦 Package Deployment Options
+## Package Deployment Options
 
 ### 1. PyPI Package (Recommended for Public Release)
 
@@ -208,7 +208,7 @@ jobs:
       run: twine upload dist/*
 ```
 
-## 🚀 Specialized Deployment Scenarios
+## Specialized Deployment Scenarios
 
 ### 1. Enterprise/Internal Package
 
@@ -343,7 +343,7 @@ az container create \
     --ports 8501
 ```
 
-## 📋 Pre-Deployment Checklist
+## Pre-Deployment Checklist
 
 ### Code Quality
 - [ ] All tests pass: `pytest tests/`
@@ -372,7 +372,7 @@ az container create \
 - [ ] Dependencies licenses are compatible
 - [ ] Attribution is correct
 
-## 🔧 Maintenance and Updates
+## Maintenance and Updates
 
 ### Version Management
 ```bash

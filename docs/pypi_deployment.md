@@ -2,7 +2,7 @@
 
 This guide provides step-by-step instructions for deploying **InterpBoard** to PyPI.
 
-## 🎯 Quick Deployment Summary
+## Quick Deployment Summary
 
 To deploy InterpBoard to PyPI:
 
@@ -12,7 +12,7 @@ To deploy InterpBoard to PyPI:
 4. **Production Upload**: `twine upload dist/*`
 5. **Verify**: `pip install interpboard`
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### 1. Create PyPI Accounts
 - **Production PyPI**: https://pypi.org/account/register/
@@ -52,7 +52,7 @@ EOF
 chmod 600 ~/.pypirc
 ```
 
-## 🚀 Deployment Steps
+## Deployment Steps
 
 ### Step 1: Pre-deployment Checklist
 
@@ -141,7 +141,7 @@ print('Package available at: https://pypi.org/project/interpboard/')
 "
 ```
 
-## 🔄 Updating Your Package
+## Updating Your Package
 
 ### For Bug Fixes (Patch Version: 0.1.0 → 0.1.1)
 
@@ -179,7 +179,7 @@ sed -i 's/Development Status :: 3 - Alpha/Development Status :: 5 - Production\/
 # 3. Follow build and upload process
 ```
 
-## 🛠️ Automation with GitHub Actions
+## Automation with GitHub Actions
 
 Create `.github/workflows/publish.yml`:
 
@@ -226,7 +226,7 @@ jobs:
       run: twine upload dist/*
 ```
 
-## 📊 Package Statistics
+## Package Statistics
 
 After deployment, you can track your package:
 
@@ -240,7 +240,7 @@ pip install pypistats
 pypistats recent interpboard
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues:
 
@@ -272,7 +272,7 @@ pypistats recent interpboard
    # Update MANIFEST.in to exclude large files
    ```
 
-## ✅ Success Checklist
+## Success Checklist
 
 - [ ] Package builds without errors
 - [ ] All checks pass (`twine check`)
@@ -288,7 +288,7 @@ Your package is now live on PyPI! Users can install it with:
 pip install interpboard
 ```
 
-## 🚀 InterpBoard-Specific Deployment Instructions
+## InterpBoard-Specific Deployment Instructions
 
 ### Current Package Status
 - **Package Name**: `interpboard`
@@ -321,7 +321,7 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 interpboard --help
 
 # 8. Test Python imports
-python -c "from interpboard.dashboards import create_unified_dashboard; print('✅ InterpBoard ready!')"
+python -c "from interpboard.dashboards import create_unified_dashboard; print('InterpBoard ready!')"
 
 # 9. Upload to Production PyPI
 twine upload dist/*

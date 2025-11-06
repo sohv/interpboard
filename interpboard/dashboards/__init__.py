@@ -88,7 +88,7 @@ class AttributionDashboard:
         if methods is None:
             methods = ["vanilla_gradient", "integrated_gradients", "attention_rollout"]
         
-        print(f"🔍 Attribution Analysis: '{text}'")
+        print(f"Attribution Analysis: '{text}'")
         print(f"Methods: {methods}")
         print("=" * 50)
         
@@ -110,7 +110,7 @@ class AttributionDashboard:
         attention_methods = [m for m in methods if m in ["attention_rollout", "attention_flow"]]
         
         for method in attention_methods:
-            print(f"👁️ Computing {method}...")
+            print(f"Computing {method}...")
             if method == "attention_rollout":
                 result = self.attention_attributor.attention_rollout(text)
                 attribution_results[method] = result
@@ -121,7 +121,7 @@ class AttributionDashboard:
         # Create visualizations
         visualizations = {}
         if visualize and attribution_results:
-            print("📊 Creating visualizations...")
+            print("Creating visualizations...")
             
             # Token heatmaps for each method
             for method_name, result in attribution_results.items():
@@ -148,7 +148,7 @@ class AttributionDashboard:
             
             # Unified Interactive Dashboard (default)
             if interactive and attribution_results:
-                print("🎨 Creating unified interactive dashboard...")
+                print("Creating unified interactive dashboard...")
                 unified_fig = self._create_unified_interactive_dashboard(
                     attribution_results, 
                     text,
@@ -160,11 +160,11 @@ class AttributionDashboard:
                     # Save unified dashboard as single HTML file
                     html_path = "interpboard_dashboard.html"
                     unified_fig.write_html(html_path)
-                    print(f"📊 Saved unified interactive dashboard to {html_path}")
-                    print(f"🌐 Open {html_path} in your browser to view all analyses")
+                    print(f"Saved unified interactive dashboard to {html_path}")
+                    print(f"Open {html_path} in your browser to view all analyses")
                 else:
                     # Show directly for local environments
-                    print(f"📊 Displaying unified interactive dashboard...")
+                    print(f"Displaying unified interactive dashboard...")
                     unified_fig.show()
                     
                 visualizations["unified_dashboard"] = unified_fig
@@ -206,7 +206,7 @@ class AttributionDashboard:
         Returns:
             Dictionary mapping text to analysis results
         """
-        print(f"🔄 Comparative Attribution Analysis")
+        print(f"Comparative Attribution Analysis")
         print(f"Method: {method}")
         print(f"Texts: {len(texts)}")
         print("=" * 50)
@@ -334,7 +334,7 @@ class AttributionDashboard:
     
     def _print_attribution_summary(self, attribution_results: Dict[str, Any]):
         """Print summary of attribution results."""
-        print("\n📈 ATTRIBUTION SUMMARY:")
+        print("\nATTRIBUTION SUMMARY:")
         
         for method_name, result in attribution_results.items():
             print(f"\n{method_name.upper()}:")
@@ -358,7 +358,7 @@ class AttributionDashboard:
     
     def _create_comparison_visualization(self, results: Dict[str, DashboardResult], method: str):
         """Create visualization comparing attribution patterns across texts."""
-        print(f"\n📊 Creating comparison visualization...")
+        print(f"\nCreating comparison visualization...")
         
         fig, axes = plt.subplots(len(results), 1, figsize=(12, 3 * len(results)))
         if len(results) == 1:
@@ -386,7 +386,7 @@ class AttributionDashboard:
     
     def _create_interactive_comparison_visualization(self, results: Dict[str, DashboardResult], method: str):
         """Create interactive Plotly comparison visualization."""
-        print("🎨 Creating interactive comparison visualization...")
+        print("Creating interactive comparison visualization...")
         
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
@@ -446,13 +446,13 @@ class AttributionDashboard:
             # Save as HTML for remote environments
             html_path = "interpboard_comparison_dashboard.html" 
             fig.write_html(html_path)
-            print(f"📊 Saved interactive comparison dashboard to {html_path}")
-            print(f"🌐 Open {html_path} in your browser to view the comparison analysis")
-            print("✅ Interactive comparison dashboard saved!")
+            print(f"Saved interactive comparison dashboard to {html_path}")
+            print(f"Open {html_path} in your browser to view the comparison analysis")
+            print("Interactive comparison dashboard saved!")
         else:
             # Show directly for local environments
             fig.show()
-            print("✅ Interactive comparison dashboard displayed!")
+            print("Interactive comparison dashboard displayed!")
 
 
 class AblationDashboard:
@@ -510,7 +510,7 @@ class AblationDashboard:
             num_layers = len(self.model.transformer.h)
             layers = list(range(max(0, num_layers - 6), num_layers))
         
-        print(f"🔬 Ablation Analysis: '{text}'")
+        print(f"Ablation Analysis: '{text}'")
         print(f"Analyses: {analyses}")
         print(f"Layers: {layers}")
         print("=" * 50)
@@ -523,7 +523,7 @@ class AblationDashboard:
         
         # Activation patching analysis
         if "patching" in analyses:
-            print("🎯 Running activation patching...")
+            print("Running activation patching...")
             try:
                 with ActivationPatcher(self.model, self.tokenizer, self.device) as patcher:
                     # Find critical components
@@ -548,7 +548,7 @@ class AblationDashboard:
         
         # Causal tracing
         if "causal_tracing" in analyses:
-            print("🔗 Running causal tracing...")
+            print("Running causal tracing...")
             try:
                 with CausalTracer(self.model, self.tokenizer, self.device) as tracer:
                     # Try to identify subject tokens automatically
@@ -567,7 +567,7 @@ class AblationDashboard:
         
         # Logit lens analysis
         if "logit_lens" in analyses:
-            print("🔍 Running logit lens analysis...")
+            print("Running logit lens analysis...")
             lens_result = self.logit_lens.analyze(
                 text,
                 layers=layers,
@@ -585,7 +585,7 @@ class AblationDashboard:
         
         # Head ablation analysis
         if "head_ablation" in analyses:
-            print("✂️ Running head ablation analysis...")
+            print("Running head ablation analysis...")
             try:
                 with AttentionHeadAblator(self.model, self.tokenizer, self.device) as ablator:
                     # Focus on subset of layers and heads to avoid too many experiments
@@ -613,7 +613,7 @@ class AblationDashboard:
         
         # Create visualizations
         if visualize:
-            print("📊 Creating visualizations...")
+            print("Creating visualizations...")
             visualizations = self._create_visualizations(
                 patching_results, mechanistic_results, text, layers
             )
@@ -694,13 +694,13 @@ class AblationDashboard:
         mechanistic_results: Dict[str, Any]
     ):
         """Print summary of ablation results."""
-        print("\n🎯 ABLATION SUMMARY:")
+        print("\nABLATION SUMMARY:")
         
         # Critical components
         if "critical_components" in patching_results:
             critical = patching_results["critical_components"]
             print(f"\n  Found {len(critical)} critical components:")
-            for (location, impact), _ in critical[:5]:
+            for location, impact in critical[:5]:
                 comp_name = f"Layer {location.layer_idx}, {location.component}"
                 if location.head_idx is not None:
                     comp_name += f", Head {location.head_idx}"
@@ -749,7 +749,7 @@ def create_unified_dashboard(
     Returns:
         Tuple of (AttributionDashboard, AblationDashboard)
     """
-    print(f"🚀 Loading model: {model_name}")
+    print(f"Loading model: {model_name}")
     
     # Load model and tokenizer
     model, tokenizer = load_model_and_tokenizer(
@@ -763,6 +763,6 @@ def create_unified_dashboard(
     attribution_dashboard = AttributionDashboard(model, tokenizer, actual_device, config)
     ablation_dashboard = AblationDashboard(model, tokenizer, actual_device, config)
     
-    print(f"✅ Dashboards ready! Device: {actual_device}")
+    print(f"Dashboards ready! Device: {actual_device}")
     
     return attribution_dashboard, ablation_dashboard
